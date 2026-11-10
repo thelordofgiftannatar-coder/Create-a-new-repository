@@ -1,0 +1,6 @@
+{
+  "name": "SonicDroid - Android Music Player",
+  "description": "High-fidelity mobile music player with local audio file import, 5-band equalizer, real-time sound visualizer, MediaSession lockscreen controls, and offline PWA storage for Android.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

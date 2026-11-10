@@ -1,0 +1,228 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* Custom scrollbars for mobile */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Mobile safe area utility */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: max(0.35rem, env(safe-area-inset-top));
+}
+
+:root {
+  --prime-accent: #38bdf8;
+  --prime-accent-2: #8b5cf6;
+  --prime-surface: #0b111e;
+  --prime-glow: 0.35;
+  --prime-card-radius: 1rem;
+  --prime-icon-radius: 0.75rem;
+}
+
+/* Smooth range slider styling for Android touch */
+input[type=range] {
+  accent-color: var(--prime-accent);
+}
+
+/* DIY Card Radius Presets */
+[data-card-radius='sharp'] {
+  --prime-card-radius: 0.375rem;
+}
+[data-card-radius='rounded'] {
+  --prime-card-radius: 1rem;
+}
+[data-card-radius='pill'] {
+  --prime-card-radius: 1.65rem;
+}
+
+/* DIY Icon Button Shape Presets */
+[data-icon-shape='rounded'] {
+  --prime-icon-radius: 0.75rem;
+}
+[data-icon-shape='circle'] {
+  --prime-icon-radius: 9999px;
+}
+[data-icon-shape='sharp'] {
+  --prime-icon-radius: 0.25rem;
+}
+[data-icon-shape='soft'] {
+  --prime-icon-radius: 1.15rem;
+}
+
+.prime-card {
+  border-radius: var(--prime-card-radius) !important;
+}
+
+.prime-icon-btn {
+  border-radius: var(--prime-icon-radius) !important;
+}
+
+/* DIY Icon Packs (applied via root attribute) */
+[data-icon-pack='comic'] svg.lucide {
+  stroke-width: 2.5px;
+  filter: drop-shadow(1px 1.5px 0px rgba(0, 0, 0, 0.9));
+}
+
+[data-icon-pack='neon'] svg.lucide {
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 6px var(--prime-accent));
+}
+
+[data-icon-pack='duotone'] svg.lucide {
+  stroke-width: 2px;
+  fill: color-mix(in srgb, var(--prime-accent) 22%, transparent);
+}
+
+[data-icon-pack='thin'] svg.lucide {
+  stroke-width: 1.35px;
+}
+
+/* DIY Screen Styles */
+[data-screen-style='amoled-black'] .prime-header {
+  background-color: rgba(0, 0, 0, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+[data-screen-style='amoled-black'] .prime-card {
+  background-color: rgba(4, 6, 12, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: none !important;
+}
+
+[data-screen-style='comic-panel'] .prime-card {
+  border-width: 2px !important;
+  border-color: #020408 !important;
+  box-shadow: 4px 4px 0px #020408, 0 0 0 1px color-mix(in srgb, var(--prime-accent) 40%, transparent) !important;
+}
+[data-screen-style='comic-panel'] .prime-header {
+  border-bottom-width: 2px !important;
+  border-color: #000000 !important;
+}
+
+[data-screen-style='neon-hud'] .prime-card {
+  border-color: color-mix(in srgb, var(--prime-accent) 42%, transparent) !important;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--prime-accent) 16%, transparent) !important;
+}
+[data-screen-style='neon-hud'] .prime-header {
+  border-color: color-mix(in srgb, var(--prime-accent) 35%, transparent) !important;
+}
+
+[data-screen-style='borderless-air'] .prime-card {
+  border-color: transparent !important;
+  background-color: rgba(255, 255, 255, 0.045) !important;
+  box-shadow: none !important;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+/* Official Google Sign-In Material Button Styling */
+.gsi-material-button {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-appearance: none;
+  background-color: #ffffff;
+  background-image: none;
+  border: 1px solid #747775;
+  border-radius: 20px;
+  box-sizing: border-box;
+  color: #1f1f1f;
+  cursor: pointer;
+  font-family: 'Plus Jakarta Sans', Roboto, arial, sans-serif;
+  font-size: 14px;
+  height: 40px;
+  letter-spacing: 0.25px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 14px;
+  position: relative;
+  text-align: center;
+  transition: background-color 0.218s, border-color 0.218s, box-shadow 0.218s;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: auto;
+  max-width: 400px;
+  min-width: min-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gsi-material-button .gsi-material-button-icon {
+  height: 20px;
+  margin-right: 10px;
+  min-width: 20px;
+  width: 20px;
+}
+
+.gsi-material-button .gsi-material-button-content-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+  height: 100%;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+
+.gsi-material-button .gsi-material-button-contents {
+  flex-grow: 1;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.gsi-material-button:hover {
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  background-color: #f8fafc;
+}
+
+.gsi-material-button:disabled {
+  cursor: default;
+  background-color: #ffffff61;
+  border-color: #1f1f1f1f;
+}

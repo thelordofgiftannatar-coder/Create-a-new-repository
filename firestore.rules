@@ -1,0 +1,403 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 4.1: Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global hardened helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isEqBandValid(v) {
+      return (v is int || v is float) && v >= -24 && v <= 24;
+    }
+
+    function isValidHexOrEmpty(v) {
+      return v is string && v.size() <= 16 && (v.size() == 0 || v.matches('^#[0-9a-fA-F]{3,8}$'));
+    }
+
+    function isValidDiyStyle(diy) {
+      return diy is map
+        && diy.keys().hasAll([
+          'iconPack', 'iconShape', 'widgetStyle', 'widgetArtShape',
+          'widgetOpacity', 'widgetShowProgress', 'widgetShowFavorite',
+          'screenStyle', 'cardRadius', 'heroArtMode',
+          'customPrimaryHex', 'customSecondaryHex', 'customSurfaceHex',
+          'overlayEffectOverride', 'effectIntensity', 'glowIntensity'
+        ])
+        && diy.keys().hasOnly([
+          'iconPack', 'iconShape', 'widgetStyle', 'widgetArtShape',
+          'widgetOpacity', 'widgetShowProgress', 'widgetShowFavorite',
+          'screenStyle', 'cardRadius', 'heroArtMode',
+          'customPrimaryHex', 'customSecondaryHex', 'customSurfaceHex',
+          'overlayEffectOverride', 'effectIntensity', 'glowIntensity'
+        ])
+        && diy.iconPack is string && diy.iconPack in ['classic', 'comic', 'neon', 'duotone', 'thin']
+        && diy.iconShape is string && diy.iconShape in ['rounded', 'circle', 'sharp', 'soft']
+        && diy.widgetStyle is string && diy.widgetStyle in ['docked-bar', 'floating-pill', 'glass-card', 'minimal-slim', 'vinyl-dock']
+        && diy.widgetArtShape is string && diy.widgetArtShape in ['rounded', 'circle', 'square']
+        && (diy.widgetOpacity is int || diy.widgetOpacity is float) && diy.widgetOpacity >= 0.3 && diy.widgetOpacity <= 1.0
+        && diy.widgetShowProgress is bool
+        && diy.widgetShowFavorite is bool
+        && diy.screenStyle is string && diy.screenStyle in ['obsidian-glass', 'amoled-black', 'comic-panel', 'neon-hud', 'borderless-air']
+        && diy.cardRadius is string && diy.cardRadius in ['sharp', 'rounded', 'pill']
+        && diy.heroArtMode is string && diy.heroArtMode in ['poster', 'framed', 'vinyl', 'aurora-halo']
+        && isValidHexOrEmpty(diy.customPrimaryHex)
+        && isValidHexOrEmpty(diy.customSecondaryHex)
+        && isValidHexOrEmpty(diy.customSurfaceHex)
+        && diy.overlayEffectOverride is string && diy.overlayEffectOverride in [
+          'theme-default', 'red-smoke', 'rain', 'stars', 'portal', 'embers',
+          'fireflies', 'candles', 'digital-rain', 'snow', 'sandstorm',
+          'aurora-waves', 'prism-rays', 'scanlines', 'none'
+        ]
+        && (diy.effectIntensity is int || diy.effectIntensity is float) && diy.effectIntensity >= 0.2 && diy.effectIntensity <= 2.0
+        && (diy.glowIntensity is int || diy.glowIntensity is float) && diy.glowIntensity >= 0 && diy.glowIntensity <= 1.0;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'email', 'photoURL', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.uid == request.auth.uid
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 120
+        && (!('email' in data) || (data.email is string && data.email.size() <= 254))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 2048))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCloudTrack(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'title', 'artist', 'album', 'duration', 'source', 'dateAdded', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'title', 'artist', 'album', 'duration', 'source', 'dateAdded',
+          'year', 'trackNumber', 'folderPath', 'genre', 'lyrics', 'coverUrl',
+          'isFavorite', 'playCount', 'lastPlayedAt', 'waveform', 'driveFileId',
+          'mimeType', 'fileSize', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.artist is string && data.artist.size() >= 1 && data.artist.size() <= 200
+        && data.album is string && data.album.size() >= 1 && data.album.size() <= 200
+        && (data.duration is int || data.duration is float) && data.duration >= 0 && data.duration <= 86400
+        && data.source is string && data.source in ['curated', 'local', 'drive']
+        && (data.dateAdded is int || data.dateAdded is float) && data.dateAdded >= 0
+        && (!('year' in data) || (data.year is string && data.year.size() <= 12))
+        && (!('trackNumber' in data) || (data.trackNumber is int && data.trackNumber >= 0 && data.trackNumber <= 9999))
+        && (!('folderPath' in data) || (data.folderPath is string && data.folderPath.size() <= 300))
+        && (!('genre' in data) || (data.genre is string && data.genre.size() <= 80))
+        && (!('lyrics' in data) || (data.lyrics is string && data.lyrics.size() <= 25000))
+        && (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 250000))
+        && (!('isFavorite' in data) || data.isFavorite is bool)
+        && (!('playCount' in data) || (data.playCount is int && data.playCount >= 0 && data.playCount <= 10000000))
+        && (!('lastPlayedAt' in data) || ((data.lastPlayedAt is int || data.lastPlayedAt is float) && data.lastPlayedAt >= 0))
+        && (!('waveform' in data) || (
+          data.waveform is list
+          && data.waveform.size() <= 64
+          && (data.waveform.size() == 0 || (data.waveform[0] is int || data.waveform[0] is float))
+        ))
+        && (!('driveFileId' in data) || (data.driveFileId is string && data.driveFileId.size() <= 256))
+        && (!('mimeType' in data) || (data.mimeType is string && data.mimeType.size() <= 120))
+        && (!('fileSize' in data) || (data.fileSize is int && data.fileSize >= 0))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCloudPlaylist(data) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'trackIds', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'name', 'description', 'trackIds', 'coverUrl', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && (!('description' in data) || (data.description is string && data.description.size() <= 500))
+        && data.trackIds is list
+        && data.trackIds.size() <= 500
+        && (data.trackIds.size() == 0 || data.trackIds[0] is string)
+        && (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 250000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserPreferences(data) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'eqEnabled', 'eqPreamp', 'eqBands', 'eqBassBoost',
+          'eqSurround', 'eqPreset', 'activeThemeId', 'enableAtmosphericEffects',
+          'blur', 'dim', 'extraVignette', 'useAlbumArtFallback', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'eqEnabled', 'eqPreamp', 'eqBands', 'eqBassBoost',
+          'eqSurround', 'eqPreset', 'activeThemeId', 'enableAtmosphericEffects',
+          'blur', 'dim', 'extraVignette', 'useAlbumArtFallback', 'themeWallpaperUrls', 'diyStyle',
+          'language', 'showWaveforms', 'headsetAutoPause', 'enableLockScreenOverlay',
+          'enableNotifications', 'showCuratedTracks', 'keepScreenAwake', 'autoExtractArt',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.ownerId == request.auth.uid
+        && data.eqEnabled is bool
+        && (data.eqPreamp is int || data.eqPreamp is float) && data.eqPreamp >= -24 && data.eqPreamp <= 24
+        && data.eqBands is list && data.eqBands.size() == 5
+        && isEqBandValid(data.eqBands[0])
+        && isEqBandValid(data.eqBands[1])
+        && isEqBandValid(data.eqBands[2])
+        && isEqBandValid(data.eqBands[3])
+        && isEqBandValid(data.eqBands[4])
+        && (data.eqBassBoost is int || data.eqBassBoost is float) && data.eqBassBoost >= 0 && data.eqBassBoost <= 100
+        && data.eqSurround is bool
+        && data.eqPreset is string && data.eqPreset.size() >= 1 && data.eqPreset.size() <= 64
+        && data.activeThemeId is string && data.activeThemeId.size() >= 1 && data.activeThemeId.size() <= 64
+        && data.enableAtmosphericEffects is bool
+        && (data.blur is int || data.blur is float) && data.blur >= 0 && data.blur <= 30
+        && (data.dim is int || data.dim is float) && data.dim >= 0 && data.dim <= 1
+        && data.extraVignette is bool
+        && data.useAlbumArtFallback is bool
+        && (!('themeWallpaperUrls' in data) || (
+          data.themeWallpaperUrls is map
+          && data.themeWallpaperUrls.keys().hasOnly([
+            'prime-one', 'absolute-dc', 'batman', 'justice-league', 'avengers', 'marvel',
+            'medieval-times', 'forest', 'dnd', 'harry-potter', 'blade-runner',
+            'cyberpunk-2077', 'dune', 'maze-runner', 'ghost-in-the-shell',
+            'evangelion', 'vinland-saga', 'berserk'
+          ])
+        ))
+        && (!('diyStyle' in data) || isValidDiyStyle(data.diyStyle))
+        && (!('language' in data) || (data.language is string && data.language.size() <= 16))
+        && (!('showWaveforms' in data) || data.showWaveforms is bool)
+        && (!('headsetAutoPause' in data) || data.headsetAutoPause is bool)
+        && (!('enableLockScreenOverlay' in data) || data.enableLockScreenOverlay is bool)
+        && (!('enableNotifications' in data) || data.enableNotifications is bool)
+        && (!('showCuratedTracks' in data) || data.showCuratedTracks is bool)
+        && (!('keepScreenAwake' in data) || data.keepScreenAwake is bool)
+        && (!('autoExtractArt' in data) || data.autoExtractArt is bool)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Master Profile Collection (Private PII strictly isolated to owner get/write)
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isSignedIn()
+        && isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == userId
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn()
+        && isEmailVerified()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'photoURL', 'updatedAt']);
+
+      allow delete: if false;
+
+      // Synced Track Metadata, Tags & Artwork References
+      match /tracks/{trackId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && isValidId(trackId)
+          && isOwner(userId)
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow list: if isSignedIn()
+          && isOwner(userId)
+          && existing().ownerId == request.auth.uid;
+
+        allow create: if isSignedIn()
+          && isEmailVerified()
+          && isValidId(userId)
+          && isValidId(trackId)
+          && isOwner(userId)
+          && isValidCloudTrack(incoming())
+          && incoming().id == trackId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow update: if isSignedIn()
+          && isEmailVerified()
+          && isValidId(userId)
+          && isValidId(trackId)
+          && isOwner(userId)
+          && isValidCloudTrack(incoming())
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'artist', 'album', 'year', 'trackNumber', 'folderPath',
+              'genre', 'lyrics', 'coverUrl', 'waveform', 'updatedAt'
+            ])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['isFavorite', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['playCount', 'lastPlayedAt', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['driveFileId', 'mimeType', 'fileSize', 'source', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'artist', 'album', 'duration', 'source', 'dateAdded', 'year', 'trackNumber',
+              'folderPath', 'genre', 'lyrics', 'coverUrl', 'isFavorite', 'playCount', 'lastPlayedAt',
+              'waveform', 'driveFileId', 'mimeType', 'fileSize', 'updatedAt'
+            ])
+          );
+
+        allow delete: if isSignedIn()
+          && isEmailVerified()
+          && isValidId(userId)
+          && isValidId(trackId)
+          && isOwner(userId)
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+      }
+
+      // Synced User Playlists
+      match /playlists/{playlistId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && isValidId(playlistId)
+          && isOwner(userId)
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow list: if isSignedIn()
+          && isOwner(userId)
+          && existing().ownerId == request.auth.uid;
+
+        allow create: if isSignedIn()
+          && isEmailVerified()
+          && isValidId(userId)
+          && isValidId(playlistId)
+          && isOwner(userId)
+          && isValidCloudPlaylist(incoming())
+          && incoming().id == playlistId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow update: if isSignedIn()
+          && isEmailVerified()
+          && isValidId(userId)
+          && isValidId(playlistId)
+          && isOwner(userId)
+          && isValidCloudPlaylist(incoming())
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'coverUrl', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['trackIds', 'updatedAt'])
+            || incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'coverUrl', 'trackIds', 'updatedAt'])
+          );
+
+        allow delete: if isSignedIn()
+          && isEmailVerified()
+          && isValidId(userId)
+          && isValidId(playlistId)
+          && isOwner(userId)
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+      }
+
+      // Synced User Preferences (EQ, Landscape Themes, App Settings)
+      match /preferences/{prefId} {
+        allow get: if isSignedIn()
+          && isValidId(userId)
+          && isValidId(prefId)
+          && isOwner(userId)
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow list: if isSignedIn()
+          && isOwner(userId)
+          && existing().ownerId == request.auth.uid;
+
+        allow create: if isSignedIn()
+          && isEmailVerified()
+          && isValidId(userId)
+          && isValidId(prefId)
+          && isOwner(userId)
+          && isValidUserPreferences(incoming())
+          && incoming().id == prefId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+
+        allow update: if isSignedIn()
+          && isEmailVerified()
+          && isValidId(userId)
+          && isValidId(prefId)
+          && isOwner(userId)
+          && isValidUserPreferences(incoming())
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'eqEnabled', 'eqPreamp', 'eqBands', 'eqBassBoost', 'eqSurround', 'eqPreset', 'updatedAt'
+            ])
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'activeThemeId', 'enableAtmosphericEffects', 'blur', 'dim', 'extraVignette',
+              'useAlbumArtFallback', 'themeWallpaperUrls', 'diyStyle', 'updatedAt'
+            ])
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'language', 'showWaveforms', 'headsetAutoPause', 'enableLockScreenOverlay',
+              'enableNotifications', 'showCuratedTracks', 'keepScreenAwake', 'autoExtractArt', 'updatedAt'
+            ])
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'eqEnabled', 'eqPreamp', 'eqBands', 'eqBassBoost', 'eqSurround', 'eqPreset',
+              'activeThemeId', 'enableAtmosphericEffects', 'blur', 'dim', 'extraVignette',
+              'useAlbumArtFallback', 'themeWallpaperUrls', 'diyStyle', 'language', 'showWaveforms',
+              'headsetAutoPause', 'enableLockScreenOverlay', 'enableNotifications',
+              'showCuratedTracks', 'keepScreenAwake', 'autoExtractArt', 'updatedAt'
+            ])
+          );
+
+        allow delete: if isSignedIn()
+          && isEmailVerified()
+          && isValidId(userId)
+          && isValidId(prefId)
+          && isOwner(userId)
+          && get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid;
+      }
+    }
+  }
+}

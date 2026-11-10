@@ -1,0 +1,330 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated Prime One user profile storing account identity for private library sync.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID matching the document ID."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "User display name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254,
+          "description": "Private user email address isolated under owner-only read rules."
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 2048,
+          "description": "Profile avatar URL."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-updated timestamp."
+        }
+      },
+      "required": ["uid", "displayName", "createdAt", "updatedAt"]
+    },
+    "CloudTrack": {
+      "title": "CloudTrack",
+      "description": "Synced track metadata, custom ID3 tags, folder mapping, lyrics, artwork URL, and Google Drive audio file reference.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "artist": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "album": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "duration": {
+          "type": "number"
+        },
+        "source": {
+          "type": "string",
+          "enum": ["curated", "local", "drive"]
+        },
+        "dateAdded": {
+          "type": "number"
+        },
+        "year": {
+          "type": "string",
+          "maxLength": 12
+        },
+        "trackNumber": {
+          "type": "integer"
+        },
+        "folderPath": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "genre": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "lyrics": {
+          "type": "string",
+          "maxLength": 25000
+        },
+        "coverUrl": {
+          "type": "string",
+          "maxLength": 250000
+        },
+        "isFavorite": {
+          "type": "boolean"
+        },
+        "playCount": {
+          "type": "integer"
+        },
+        "lastPlayedAt": {
+          "type": "number"
+        },
+        "waveform": {
+          "type": "array"
+        },
+        "driveFileId": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "mimeType": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "fileSize": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "title", "artist", "album", "duration", "source", "dateAdded", "createdAt", "updatedAt"]
+    },
+    "CloudPlaylist": {
+      "title": "CloudPlaylist",
+      "description": "User-created playlist synchronized across devices.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "trackIds": {
+          "type": "array"
+        },
+        "coverUrl": {
+          "type": "string",
+          "maxLength": 250000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "name", "trackIds", "createdAt", "updatedAt"]
+    },
+    "UserPreferences": {
+      "title": "UserPreferences",
+      "description": "Synchronized equalizer curves, thematic landscape config, and Prime One player preferences.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "eqEnabled": {
+          "type": "boolean"
+        },
+        "eqPreamp": {
+          "type": "number"
+        },
+        "eqBands": {
+          "type": "array"
+        },
+        "eqBassBoost": {
+          "type": "number"
+        },
+        "eqSurround": {
+          "type": "boolean"
+        },
+        "eqPreset": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "activeThemeId": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "enableAtmosphericEffects": {
+          "type": "boolean"
+        },
+        "blur": {
+          "type": "number"
+        },
+        "dim": {
+          "type": "number"
+        },
+        "extraVignette": {
+          "type": "boolean"
+        },
+        "useAlbumArtFallback": {
+          "type": "boolean"
+        },
+        "themeWallpaperUrls": {
+          "type": "object"
+        },
+        "diyStyle": {
+          "type": "object",
+          "description": "Custom icon pack, mini-widget style, screen surface skin, color pickers, and atmospheric effect parameters."
+        },
+        "language": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "showWaveforms": {
+          "type": "boolean"
+        },
+        "headsetAutoPause": {
+          "type": "boolean"
+        },
+        "enableLockScreenOverlay": {
+          "type": "boolean"
+        },
+        "enableNotifications": {
+          "type": "boolean"
+        },
+        "showCuratedTracks": {
+          "type": "boolean"
+        },
+        "keepScreenAwake": {
+          "type": "boolean"
+        },
+        "autoExtractArt": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "eqEnabled",
+        "eqPreamp",
+        "eqBands",
+        "eqBassBoost",
+        "eqSurround",
+        "eqPreset",
+        "activeThemeId",
+        "enableAtmosphericEffects",
+        "blur",
+        "dim",
+        "extraVignette",
+        "useAlbumArtFallback",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private owner-only user profile document storing PII (email, displayName, photoURL)."
+    },
+    "/users/{userId}/tracks/{trackId}": {
+      "schema": {
+        "$ref": "#/entities/CloudTrack"
+      },
+      "description": "Synced user track tags, custom cover art references, playback counters, and Google Drive audio IDs."
+    },
+    "/users/{userId}/playlists/{playlistId}": {
+      "schema": {
+        "$ref": "#/entities/CloudPlaylist"
+      },
+      "description": "User playlists synced across devices."
+    },
+    "/users/{userId}/preferences/{prefId}": {
+      "schema": {
+        "$ref": "#/entities/UserPreferences"
+      },
+      "description": "Cross-device synchronized EQ curves, thematic landscape config, and Prime One feature settings."
+    }
+  }
+}
